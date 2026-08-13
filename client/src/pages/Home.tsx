@@ -1,25 +1,340 @@
-import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
-import { Streamdown } from 'streamdown';
-
-/**
- * All content in this page are only for example, replace with your own feature implementation
- * When building pages, remember your instructions in Frontend Best Practices, Design Guide and Common Pitfalls
+/*
+ * AI Command Center · Observatorio de Cristal
+ * Layout asimétrico, glassmorfismo editorial y acciones honestas: distinguir conectado,
+ * configurado y bloqueado. La UI no finge controlar procesos del sistema sin backend.
  */
-export default function Home() {
-  // If theme is switchable in App.tsx, we can implement theme toggling like this:
-  // const { theme, toggleTheme } = useTheme();
+import { useMemo, useState } from "react";
+import {
+  Activity,
+  ArrowUpRight,
+  Bot,
+  Check,
+  ChevronRight,
+  CircleHelp,
+  Clipboard,
+  Code2,
+  Command,
+  Copy,
+  Cpu,
+  FileCode2,
+  FolderOpen,
+  Gauge,
+  Globe2,
+  KeyRound,
+  LayoutDashboard,
+  Library,
+  Menu,
+  MessageSquareText,
+  Network,
+  PanelLeft,
+  Play,
+  RefreshCw,
+  Search,
+  ServerCog,
+  Settings2,
+  ShieldCheck,
+  Sparkles,
+  TerminalSquare,
+  X,
+  Zap,
+} from "lucide-react";
+import { toast } from "sonner";
+
+type ViewKey = "overview" | "workspaces" | "tokens" | "memory" | "runbook";
+
+type Service = {
+  id: string;
+  name: string;
+  eyebrow: string;
+  description: string;
+  icon: typeof Bot;
+  accent: "ice" | "coral" | "mint";
+  status: "Configurado" | "Requiere modelo" | "Origen bloqueado";
+  statusNote: string;
+  endpoint?: string;
+  command?: string;
+  actionLabel: string;
+};
+
+const services: Service[] = [
+  {
+    id: "odysseus",
+    name: "Odysseus",
+    eyebrow: "Workspace general",
+    description: "Chat, agentes, memoria, investigación y documentos en una sola estación.",
+    icon: Bot,
+    accent: "ice",
+    status: "Configurado",
+    statusNote: "Panel local/proxy guardado",
+    endpoint: "https://7000-ish8079bsqjffkbhdb5q6-393e644c.us1.manus.computer",
+    command: "cd ~/workspaces/odysseus && ./venv/bin/python -m uvicorn app:app --host 0.0.0.0 --port 7000",
+    actionLabel: "Abrir Odysseus",
+  },
+  {
+    id: "openclaw",
+    name: "OpenClaw",
+    eyebrow: "Agente personal",
+    description: "La langosta para conectar canales y ejecutar tareas con aprobación humana.",
+    icon: Network,
+    accent: "coral",
+    status: "Origen bloqueado",
+    statusNote: "El Gateway rechaza el proxy del navegador",
+    endpoint: "https://18789-ish8079bsqjffkbhdb5q6-393e644c.us1.manus.computer",
+    command: "openclaw gateway run --port 18789",
+    actionLabel: "Abrir panel",
+  },
+  {
+    id: "aider",
+    name: "Aider",
+    eyebrow: "Estación de código",
+    description: "Pair programming en terminal con git, edición precisa y cualquier modelo compatible.",
+    icon: Code2,
+    accent: "mint",
+    status: "Requiere modelo",
+    statusNote: "Instalado; falta una API key o proveedor local",
+    command: "cd ~/workspaces/aider && ./venv/bin/aider /ruta/a/tu/proyecto",
+    actionLabel: "Copiar arranque",
+  },
+];
+
+const navItems: { key: ViewKey; label: string; detail: string; icon: typeof LayoutDashboard }[] = [
+  { key: "overview", label: "Centro de mando", detail: "Lectura general", icon: LayoutDashboard },
+  { key: "workspaces", label: "Workspaces", detail: "3 estaciones", icon: ServerCog },
+  { key: "tokens", label: "Token lab", detail: "Optimización", icon: Gauge },
+  { key: "memory", label: "Memoria y archivos", detail: "Estructura local", icon: Library },
+  { key: "runbook", label: "Runbook", detail: "Pasos seguros", icon: Clipboard },
+];
+
+const tokenRows = [
+  { label: "Lecturas de archivos", value: "−70%", note: "resúmenes por capas", tone: "ice" },
+  { label: "Salida de terminal", value: "−55%", note: "compresión contextual", tone: "mint" },
+  { label: "Contexto repetido", value: "−42%", note: "memoria de trabajo", tone: "coral" },
+];
+
+function StatusPill({ status }: { status: Service["status"] }) {
+  const tone = status === "Configurado" ? "mint" : status === "Origen bloqueado" ? "coral" : "ice";
+  return (
+    <span className={`status-pill status-pill-${tone}`}>
+      <span className="status-dot" />
+      {status}
+    </span>
+  );
+}
+
+function IconMark() {
+  return (
+    <img
+      className="brand-symbol"
+      src="/manus-storage/ai-command-symbol_275ca6ba.png"
+      alt="Símbolo AI Command Center"
+    />
+  );
+}
+
+function ServiceCard({ service, onCopy }: { service: Service; onCopy: (value: string, label: string) => void }) {
+  const Icon = service.icon;
+  const isOpenable = Boolean(service.endpoint);
+  return (
+    <article className={`service-card service-${service.accent}`}>
+      <div className="service-card-topline">
+        <div className="service-icon"><Icon size={18} strokeWidth={1.8} /></div>
+        <div className="service-top-actions">
+          <StatusPill status={service.status} />
+          <button className="icon-button" aria-label={`Más información sobre ${service.name}`} onClick={() => toast.info(service.statusNote)}>
+            <CircleHelp size={15} />
+          </button>
+        </div>
+      </div>
+      <div className="service-copy">
+        <p className="eyebrow">{service.eyebrow}</p>
+        <h3>{service.name}</h3>
+        <p>{service.description}</p>
+      </div>
+      <div className="service-meta">
+        <span><Activity size={13} /> {service.statusNote}</span>
+      </div>
+      <div className="service-card-footer">
+        {isOpenable ? (
+          <a className="button button-primary" href={service.endpoint} target="_blank" rel="noreferrer">
+            {service.actionLabel} <ArrowUpRight size={14} />
+          </a>
+        ) : (
+          <button className="button button-primary" onClick={() => service.command && onCopy(service.command, `${service.name}: comando copiado`)}>
+            {service.actionLabel} <Copy size={14} />
+          </button>
+        )}
+        {service.command && (
+          <button className="button button-quiet" onClick={() => onCopy(service.command ?? "", "Comando copiado")}>Ver comando</button>
+        )}
+      </div>
+    </article>
+  );
+}
+
+function Home() {
+  const [activeView, setActiveView] = useState<ViewKey>("overview");
+  const [mobileNav, setMobileNav] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [copiedLabel, setCopiedLabel] = useState("Copiar");
+  const [projectPath, setProjectPath] = useState(() => localStorage.getItem("ai-command-center-project") ?? "~/proyectos/mi-app");
+
+  const activeLabel = useMemo(() => navItems.find((item) => item.key === activeView)?.label ?? "Centro de mando", [activeView]);
+
+  const onCopy = async (value: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopiedLabel(label);
+      toast.success(label);
+      window.setTimeout(() => setCopiedLabel("Copiar"), 2200);
+    } catch {
+      toast.error("El navegador no permitió copiar el comando");
+    }
+  };
+
+  const saveProjectPath = () => {
+    localStorage.setItem("ai-command-center-project", projectPath);
+    toast.success("Ruta de proyecto guardada localmente");
+  };
+
+  const showView = (view: ViewKey) => {
+    setActiveView(view);
+    setMobileNav(false);
+  };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <main>
-        {/* Example: lucide-react for icons */}
-        <Loader2 className="animate-spin" />
-        Example Page
-        {/* Example: Streamdown for markdown rendering */}
-        <Streamdown>Any **markdown** content</Streamdown>
-        <Button variant="default">Example Button</Button>
+    <div className="app-shell">
+      <aside className={`sidebar ${mobileNav ? "sidebar-open" : ""}`}>
+        <div className="sidebar-head">
+          <div className="brand-lockup">
+            <IconMark />
+            <div>
+              <span className="brand-kicker">AI / OPS</span>
+              <strong>Command Center</strong>
+            </div>
+          </div>
+          <button className="icon-button mobile-close" aria-label="Cerrar navegación" onClick={() => setMobileNav(false)}><X size={17} /></button>
+        </div>
+
+        <div className="sidebar-section-label">Navegación</div>
+        <nav className="nav-list" aria-label="Navegación principal">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const active = item.key === activeView;
+            return (
+              <button key={item.key} className={`nav-item ${active ? "nav-item-active" : ""}`} onClick={() => showView(item.key)}>
+                <Icon size={17} strokeWidth={active ? 2.2 : 1.8} />
+                <span><strong>{item.label}</strong><small>{item.detail}</small></span>
+                {active && <ChevronRight className="nav-chevron" size={15} />}
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className="sidebar-spacer" />
+        <div className="operator-card">
+          <div className="operator-avatar">OP</div>
+          <div><span className="eyebrow">Operador local</span><strong>Tu estación</strong></div>
+          <span className="online-pip" title="Interfaz activa" />
+        </div>
+        <div className="sidebar-footnote"><ShieldCheck size={14} /> Sin secretos guardados en esta interfaz</div>
+      </aside>
+
+      {mobileNav && <button className="mobile-scrim" aria-label="Cerrar menú" onClick={() => setMobileNav(false)} />}
+
+      <main className="main-canvas">
+        <header className="topbar">
+          <div className="topbar-left">
+            <button className="icon-button menu-toggle" aria-label="Abrir navegación" onClick={() => setMobileNav(true)}><Menu size={19} /></button>
+            <div className="breadcrumb"><span>Workspace</span><ChevronRight size={14} /><strong>{activeLabel}</strong></div>
+          </div>
+          <div className="topbar-actions">
+            <button className="icon-button" aria-label="Buscar en el centro de mando" onClick={() => setSearchOpen((open) => !open)}><Search size={17} /></button>
+            <button className="button button-quiet topbar-command" onClick={() => onCopy("openclaw gateway run --port 18789", "Comando de Gateway copiado")}><Command size={15} /> <span>{copiedLabel}</span></button>
+            <div className="live-indicator"><span className="live-dot" /> Sesión local</div>
+          </div>
+        </header>
+
+        {searchOpen && (
+          <div className="search-drawer">
+            <Search size={16} /><input autoFocus placeholder="Busca una herramienta, una acción o un comando…" aria-label="Buscar" /><kbd>ESC</kbd>
+          </div>
+        )}
+
+        <section className="hero-panel">
+          <div className="hero-art" aria-hidden="true" />
+          <div className="hero-gridlines" aria-hidden="true" />
+          <div className="hero-content">
+            <div className="hero-kicker"><span className="kicker-line" /> PARTE OPERATIVO / 01</div>
+            <h1>Tu sistema,<br /><em>en una sola lectura.</em></h1>
+            <p>Una estación de trabajo abierta para coordinar agentes, código, memoria y automatizaciones sin perder de vista qué está conectado de verdad.</p>
+            <div className="hero-actions">
+              <button className="button button-hero" onClick={() => showView("workspaces")}><Play size={14} fill="currentColor" /> Ir a workspaces</button>
+              <button className="text-link" onClick={() => showView("runbook")}>Leer el runbook <ArrowUpRight size={14} /></button>
+            </div>
+          </div>
+          <div className="hero-readout">
+            <div className="readout-label">LECTURA DEL SISTEMA</div>
+            <div className="readout-value">02 <span>/ 03</span></div>
+            <div className="readout-caption">herramientas preparadas<br />para la siguiente acción</div>
+            <div className="readout-bar"><span /></div>
+          </div>
+        </section>
+
+        {activeView === "overview" && (
+          <>
+            <section className="section-heading">
+              <div><p className="eyebrow">Módulo 01 / Estado</p><h2>Estaciones de trabajo</h2></div>
+              <div className="section-heading-side"><span>Actualizado ahora</span><button className="button button-quiet" onClick={() => toast.info("Estado de interfaz actualizado; la comprobación real requiere conectar cada servicio.")}><RefreshCw size={14} /> Comprobar</button></div>
+            </section>
+            <section className="services-grid">
+              {services.map((service) => <ServiceCard key={service.id} service={service} onCopy={onCopy} />)}
+            </section>
+
+            <section className="lower-grid">
+              <article className="focus-card">
+                <div className="card-heading"><div><p className="eyebrow">Foco recomendado</p><h3>Termina el puente de OpenClaw</h3></div><span className="priority-tag">PENDIENTE</span></div>
+                <p>El Gateway está instalado, pero el proxy del navegador no aparece en <code>gateway.controlUi.allowedOrigins</code>. Añádelo en la configuración local y reinicia el proceso; el panel no puede resolverlo desde un frontend estático.</p>
+                <div className="code-strip"><TerminalSquare size={15} /><code>openclaw doctor --fix</code><button onClick={() => onCopy("openclaw doctor --fix", "Comando de diagnóstico copiado")}><Copy size={14} /></button></div>
+                <button className="text-link" onClick={() => showView("runbook")}>Abrir pasos de reparación <ChevronRight size={14} /></button>
+              </article>
+              <article className="radar-card">
+                <img src="/manus-storage/command-center-radar_ccbd4145.png" alt="Prisma glacial rodeado de anillos de estado" />
+                <div className="radar-overlay"><span className="eyebrow">Señal de coordinación</span><strong>Una capa para cada decisión.</strong></div>
+              </article>
+            </section>
+          </>
+        )}
+
+        {activeView === "workspaces" && (
+          <section className="page-section">
+            <div className="section-heading"><div><p className="eyebrow">Módulo 02 / Herramientas</p><h2>Todo lo instalado, sin mezclarlo.</h2></div><span className="section-note">3 estaciones · 1 operador</span></div>
+            <div className="workspace-list">{services.map((service) => <ServiceCard key={service.id} service={service} onCopy={onCopy} />)}</div>
+            <div className="setup-note"><Settings2 size={17} /><div><strong>Regla de oro</strong><p>Conecta un proveedor de modelo por estación. Esta interfaz recuerda rutas y comandos, pero nunca almacena tus API keys.</p></div><ShieldCheck size={17} className="muted-icon" /></div>
+          </section>
+        )}
+
+        {activeView === "tokens" && (
+          <section className="page-section">
+            <div className="section-heading"><div><p className="eyebrow">Módulo 03 / Eficiencia</p><h2>Token lab</h2><p className="lead">Ahorra contexto antes de pedir más potencia.</p></div><span className="lab-badge"><Zap size={14} /> Método abierto</span></div>
+            <div className="token-hero-grid"><article className="token-copy-card"><div className="token-mark"><Sparkles size={16} /></div><h3>Yang / compresión de contexto</h3><p>La idea que estás buscando encaja con una familia de herramientas de GitHub que indexan el repositorio, condensan lecturas y dejan que el agente busque en lugar de volcar archivos completos.</p><div className="token-actions"><a className="button button-primary" href="https://github.com/topics/token-optimization" target="_blank" rel="noreferrer">Explorar repositorios <ArrowUpRight size={14} /></a><button className="button button-quiet" onClick={() => showView("runbook")}>Aplicar método <ChevronRight size={14} /></button></div></article><div className="token-image-card"><img src="/manus-storage/token-lab-visual_eb0de451.jpg" alt="Prisma que organiza un flujo de partículas en un laboratorio de tokens" /></div></div>
+            <div className="token-metrics">{tokenRows.map((row) => <div className={`token-metric metric-${row.tone}`} key={row.label}><span className="metric-label">{row.label}</span><strong>{row.value}</strong><small>{row.note}</small></div>)}</div>
+            <div className="source-shelf"><div className="card-heading"><div><p className="eyebrow">Fuentes verificadas</p><h3>Elige la capa correcta</h3></div><Search size={18} /></div><div className="source-grid"><a className="source-card" href="https://github.com/alexgreensh/token-optimizer" target="_blank" rel="noreferrer"><span className="source-index">01</span><strong>Token Optimizer</strong><span>Contexto, checkpoints y auditoría multi-runtime.</span><ArrowUpRight size={14} /></a><a className="source-card" href="https://github.com/ppgranger/token-saver" target="_blank" rel="noreferrer"><span className="source-index">02</span><strong>Token-Saver</strong><span>Output de terminal determinista y local.</span><ArrowUpRight size={14} /></a><a className="source-card" href="https://github.com/microsoft/LLMLingua" target="_blank" rel="noreferrer"><span className="source-index">03</span><strong>LLMLingua</strong><span>Compresión académica de prompts y contexto largo.</span><ArrowUpRight size={14} /></a></div><p className="source-disclaimer"><ShieldCheck size={13} /> Compatibilidad y licencia deben comprobarse antes de instalar; este dashboard no finge que estén activos.</p></div>
+            <div className="token-checklist"><div className="card-heading"><div><p className="eyebrow">Protocolo de ahorro</p><h3>Antes de cada tarea larga</h3></div><Gauge size={20} /></div><div className="check-row"><span><Check size={14} /> Define el objetivo en 3 líneas</span><span><Check size={14} /> Lee símbolos, no carpetas enteras</span><span><Check size={14} /> Divide plan, ejecución y verificación</span></div></div>
+          </section>
+        )}
+
+        {activeView === "memory" && (
+          <section className="page-section"><div className="section-heading"><div><p className="eyebrow">Módulo 04 / Orden</p><h2>Memoria y archivos</h2><p className="lead">Un lugar para cada cosa, con decisiones reversibles.</p></div><FolderOpen size={22} /></div><div className="memory-layout"><article className="memory-tree"><div className="tree-head"><span>~/workspace</span><span className="tree-state">LOCAL</span></div><div className="tree-row tree-root"><FolderOpen size={15} /> workspaces <span>3</span></div><div className="tree-row"><Bot size={15} /> odysseus <small>chat / agents</small></div><div className="tree-row"><Code2 size={15} /> aider <small>pair coding</small></div><div className="tree-row"><Network size={15} /> openclaw <small>gateway / skills</small></div><div className="tree-row tree-root"><FolderOpen size={15} /> docs <span>4</span></div><div className="tree-row"><FileCode2 size={15} /> MASTER_AI_ACCESS.md <small>guía local</small></div><div className="tree-row"><FileCode2 size={15} /> runbook.md <small>pasos seguros</small></div></article><article className="memory-action"><p className="eyebrow">Ruta activa</p><h3>¿En qué proyecto vas a trabajar?</h3><p>La ruta se guarda solo en este navegador para rellenar tus comandos de Aider. No mueve archivos automáticamente.</p><label htmlFor="project-path">Carpeta de proyecto</label><div className="path-input"><FolderOpen size={15} /><input id="project-path" value={projectPath} onChange={(event) => setProjectPath(event.target.value)} /><button onClick={saveProjectPath}>Guardar</button></div><div className="safe-note"><ShieldCheck size={15} /><span>Seguro por defecto · sin operaciones destructivas</span></div></article></div></section>
+        )}
+
+        {activeView === "runbook" && (
+          <section className="page-section"><div className="section-heading"><div><p className="eyebrow">Módulo 05 / Operación</p><h2>Runbook de nivel 10</h2><p className="lead">Tres movimientos para pasar de instalación a trabajo real.</p></div><span className="section-note">Modo supervisado</span></div><div className="runbook-grid"><article className="run-step"><span className="step-number">01</span><div><p className="eyebrow">Preparar</p><h3>Comprueba el modelo</h3><p>Elige un proveedor en Odysseus o Aider. Si vas local, configura Ollama y verifica que el modelo responde antes de abrir un proyecto grande.</p><button className="text-link" onClick={() => onCopy("ollama list && ollama run llama3.2", "Comando local copiado")}>Copiar prueba local <Copy size={14} /></button></div></article><article className="run-step"><span className="step-number">02</span><div><p className="eyebrow">Conectar</p><h3>Repara OpenClaw sin exponerlo</h3><p>Usa allowlists de origen, autenticación y pairing. No abras DMs públicos ni pegues claves en el panel web.</p><button className="text-link" onClick={() => onCopy("openclaw security audit --deep", "Auditoría copiada")}>Copiar auditoría <Copy size={14} /></button></div></article><article className="run-step"><span className="step-number">03</span><div><p className="eyebrow">Construir</p><h3>Deja que Aider edite con git</h3><p>Inicia cada tarea en una rama, pide plan antes de cambios y revisa el diff. El agente acelera el trabajo; tú mantienes el criterio.</p><button className="text-link" onClick={() => onCopy(`cd ${projectPath} && git status && ~/workspaces/aider/venv/bin/aider`, "Arranque de Aider copiado")}>Copiar arranque <Copy size={14} /></button></div></article></div><div className="runbook-footer"><div className="footer-icon"><ShieldCheck size={18} /></div><div><strong>Principio de confianza</strong><p>Este centro unifica tu mapa de trabajo. Las acciones sobre procesos del sistema y cuentas externas siguen necesitando tu confirmación explícita.</p></div><button className="button button-primary" onClick={() => toast.success("Checklist preparado para tu siguiente sesión")}>Marcar listo <Check size={14} /></button></div></section>
+        )}
+
+        <footer className="page-footer"><span>AI Command Center / v1.0</span><span>Local-first · Open source friendly · Human in the loop</span></footer>
       </main>
     </div>
   );
 }
+
+export default Home;
