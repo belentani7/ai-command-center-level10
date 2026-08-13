@@ -196,6 +196,15 @@ code, kbd { font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospac
 .radar-card img, .token-image-card img { width: 100%; height: 100%; display: block; object-fit: cover; opacity: .78; }
 .radar-overlay { position: absolute; right: 18px; bottom: 17px; left: 18px; display: grid; gap: 5px; padding: 12px; border-left: 1px solid var(--ice); background: rgba(10, 20, 32, .54); backdrop-filter: blur(10px); }
 .radar-overlay strong { font-family: "Space Grotesk", sans-serif; color: var(--ice-bright); font-size: 14px; }
+.truth-panel { margin-top: 14px; padding: 20px; border: 1px solid rgba(182, 217, 255, .13); background: rgba(28, 46, 66, .5); }
+.truth-panel > .card-heading > svg { color: var(--mint); }
+.truth-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 16px; }
+.truth-grid > div { padding: 14px; border-top: 1px solid rgba(182, 217, 255, .16); background: rgba(8, 18, 30, .18); }
+.truth-grid strong { display: block; margin-top: 8px; color: var(--ice-bright); font-family: "Space Grotesk", sans-serif; font-size: 13px; }
+.truth-grid p { margin: 5px 0 0; color: rgba(228, 241, 255, .45); font-size: 11px; line-height: 1.5; }
+.truth-state { display: inline-flex; font-family: "IBM Plex Mono", monospace; font-size: 8px; letter-spacing: .09em; }
+.truth-state-ready { color: var(--mint); }
+.truth-state-pending { color: var(--coral); }
 
 .page-section { padding: 34px 0 16px; }
 .page-section > .section-heading { margin-top: 0; }
@@ -293,7 +302,7 @@ code, kbd { font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospac
   .hero-content h1 { font-size: 42px; }
   .hero-content > p { max-width: 410px; }
   .hero-readout { right: 26px; bottom: 23px; }
-  .services-grid, .workspace-list, .lower-grid, .token-hero-grid, .memory-layout, .token-metrics { grid-template-columns: 1fr; }
+  .services-grid, .workspace-list, .lower-grid, .token-hero-grid, .memory-layout, .token-metrics, .truth-grid { grid-template-columns: 1fr; }
   .services-grid .service-card:last-child, .workspace-list .service-card:last-child { grid-column: auto; }
   .section-heading { align-items: start; flex-direction: column; gap: 12px; margin-top: 34px; }
   .section-heading-side { width: 100%; justify-content: space-between; }

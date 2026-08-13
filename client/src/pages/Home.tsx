@@ -49,7 +49,7 @@ type Service = {
   description: string;
   icon: typeof Bot;
   accent: "ice" | "coral" | "mint";
-  status: "Configurado" | "Requiere modelo" | "Origen bloqueado";
+  status: "Enlace no verificado" | "No responde" | "No verificable";
   statusNote: string;
   endpoint?: string;
   command?: string;
@@ -64,11 +64,11 @@ const services: Service[] = [
     description: "Chat, agentes, memoria, investigación y documentos en una sola estación.",
     icon: Bot,
     accent: "ice",
-    status: "Configurado",
-    statusNote: "Panel local/proxy guardado",
+    status: "No responde",
+    statusNote: "El enlace proxy devuelve 502 en esta sesión",
     endpoint: "https://7000-ish8079bsqjffkbhdb5q6-393e644c.us1.manus.computer",
     command: "cd ~/workspaces/odysseus && ./venv/bin/python -m uvicorn app:app --host 0.0.0.0 --port 7000",
-    actionLabel: "Abrir Odysseus",
+    actionLabel: "Abrir enlace",
   },
   {
     id: "openclaw",
@@ -77,11 +77,11 @@ const services: Service[] = [
     description: "La langosta para conectar canales y ejecutar tareas con aprobación humana.",
     icon: Network,
     accent: "coral",
-    status: "Origen bloqueado",
-    statusNote: "El Gateway rechaza el proxy del navegador",
+    status: "No responde",
+    statusNote: "El proxy devuelve 502; el Gateway no está verificable aquí",
     endpoint: "https://18789-ish8079bsqjffkbhdb5q6-393e644c.us1.manus.computer",
     command: "openclaw gateway run --port 18789",
-    actionLabel: "Abrir panel",
+    actionLabel: "Abrir enlace",
   },
   {
     id: "aider",
@@ -90,8 +90,8 @@ const services: Service[] = [
     description: "Pair programming en terminal con git, edición precisa y cualquier modelo compatible.",
     icon: Code2,
     accent: "mint",
-    status: "Requiere modelo",
-    statusNote: "Instalado; falta una API key o proveedor local",
+    status: "No verificable",
+    statusNote: "El proceso local no está disponible en este entorno",
     command: "cd ~/workspaces/aider && ./venv/bin/aider /ruta/a/tu/proyecto",
     actionLabel: "Copiar arranque",
   },
@@ -106,13 +106,13 @@ const navItems: { key: ViewKey; label: string; detail: string; icon: typeof Layo
 ];
 
 const tokenRows = [
-  { label: "Lecturas de archivos", value: "−70%", note: "resúmenes por capas", tone: "ice" },
-  { label: "Salida de terminal", value: "−55%", note: "compresión contextual", tone: "mint" },
-  { label: "Contexto repetido", value: "−42%", note: "memoria de trabajo", tone: "coral" },
+  { label: "Ahorro en este equipo", value: "N/D", note: "requiere benchmark local", tone: "ice" },
+  { label: "Output comprimido", value: "N/D", note: "requiere instalar un filtro", tone: "mint" },
+  { label: "Contexto repetido", value: "N/D", note: "requiere historial real", tone: "coral" },
 ];
 
 function StatusPill({ status }: { status: Service["status"] }) {
-  const tone = status === "Configurado" ? "mint" : status === "Origen bloqueado" ? "coral" : "ice";
+  const tone = status === "No responde" ? "coral" : status === "No verificable" ? "ice" : "ice";
   return (
     <span className={`status-pill status-pill-${tone}`}>
       <span className="status-dot" />
@@ -274,8 +274,8 @@ function Home() {
           </div>
           <div className="hero-readout">
             <div className="readout-label">LECTURA DEL SISTEMA</div>
-            <div className="readout-value">02 <span>/ 03</span></div>
-            <div className="readout-caption">herramientas preparadas<br />para la siguiente acción</div>
+            <div className="readout-value">00 <span>/ 03</span></div>
+            <div className="readout-caption">procesos verificados<br />desde esta interfaz web</div>
             <div className="readout-bar"><span /></div>
           </div>
         </section>
@@ -292,16 +292,17 @@ function Home() {
 
             <section className="lower-grid">
               <article className="focus-card">
-                <div className="card-heading"><div><p className="eyebrow">Foco recomendado</p><h3>Termina el puente de OpenClaw</h3></div><span className="priority-tag">PENDIENTE</span></div>
-                <p>El Gateway está instalado, pero el proxy del navegador no aparece en <code>gateway.controlUi.allowedOrigins</code>. Añádelo en la configuración local y reinicia el proceso; el panel no puede resolverlo desde un frontend estático.</p>
+                <div className="card-heading">                <div><p className="eyebrow">Foco recomendado</p><h3>Conecta el proceso real antes de automatizar</h3></div><span className="priority-tag">PENDIENTE</span></div>
+                <p>La interfaz puede abrir enlaces y preparar comandos, pero no puede iniciar, detener ni inspeccionar procesos de tu máquina. Primero hay que levantar cada servicio en el mismo equipo donde vas a trabajar y verificar su respuesta.</p>
                 <div className="code-strip"><TerminalSquare size={15} /><code>openclaw doctor --fix</code><button onClick={() => onCopy("openclaw doctor --fix", "Comando de diagnóstico copiado")}><Copy size={14} /></button></div>
-                <button className="text-link" onClick={() => showView("runbook")}>Abrir pasos de reparación <ChevronRight size={14} /></button>
+                <button className="text-link" onClick={() => showView("runbook")}>Abrir pasos de conexión <ChevronRight size={14} /></button>
               </article>
               <article className="radar-card">
                 <img src="/manus-storage/command-center-radar_ccbd4145.png" alt="Prisma glacial rodeado de anillos de estado" />
                 <div className="radar-overlay"><span className="eyebrow">Señal de coordinación</span><strong>Una capa para cada decisión.</strong></div>
               </article>
             </section>
+            <section className="truth-panel"><div className="card-heading"><div><p className="eyebrow">Contrato funcional</p><h3>Qué sí hace esta web</h3></div><ShieldCheck size={18} /></div><div className="truth-grid"><div><span className="truth-state truth-state-ready">FUNCIONA AQUÍ</span><strong>Navegación y estado declarado</strong><p>Cambia de módulo, muestra la situación conocida y conserva la ruta de proyecto en este navegador.</p></div><div><span className="truth-state truth-state-ready">FUNCIONA AQUÍ</span><strong>Enlaces y comandos</strong><p>Abre URLs externas y copia comandos; tú decides cuándo ejecutarlos en tu terminal.</p></div><div><span className="truth-state truth-state-pending">REQUIERE LOCAL</span><strong>Procesos y modelos</strong><p>Arrancar Gateway, usar Aider, conectar APIs y medir tokens exige un companion local o una instalación real.</p></div></div></section>
           </>
         )}
 
