@@ -1,91 +1,113 @@
-# Manual operativo — AI Command Center
+# AI Command Center — Manual operativo 10/10
 
-## Estado del documento
+## Propósito
 
-Este manual describe lo que el dashboard puede hacer de verdad y lo que necesita una instalación local adicional. La comprobación realizada el **13 de agosto de 2026** encontró que el frontend carga, navega entre módulos y copia comandos, pero los antiguos proxies de Odysseus y OpenClaw devolvieron `502` y no había procesos locales verificables en el sandbox. Por ese motivo, el panel muestra **00/03 procesos verificados** y no presenta los servicios como conectados.
+AI Command Center es una estación de trabajo local-first para usar modelos de IA con una sola interfaz, sin mezclar Odysseus, OpenClaw, Aider y los proveedores de modelos. El sistema tiene dos caminos reales: un **companion local** que puede funcionar sin API usando un modelo instalado en tu ordenador, y un **backend seguro** para proveedores remotos cuando existe una clave configurada en el servidor.
 
-> **Regla de confianza:** una URL guardada no equivale a un servicio activo. Una herramienta instalada no equivale a un modelo configurado.
+> **Regla de honestidad:** sin API y sin un modelo local instalado, no existe una respuesta real de IA. En ese caso la interfaz sigue funcionando, pero informa de la ausencia en lugar de inventar resultados.
 
-## Qué funciona dentro del dashboard
+## Arquitectura
 
-El Centro de Mando es una interfaz web estática. Cambia de módulo sin recargar, muestra estados explícitos, abre enlaces externos, copia comandos al portapapeles, conserva la ruta de proyecto en `localStorage` y enlaza fuentes de optimización de tokens. Estas funciones fueron comprobadas en el preview.
+| Capa | Función | ¿Necesita API? | ¿Dónde se ejecuta? |
+|---|---|---:|---|
+| Interfaz React | Selector, chat, estados, comandos y documentación | No | Navegador |
+| Companion local | Puente hacia Ollama, LM Studio, llama.cpp y proveedores remotos | No para modelos locales | Tu ordenador, `127.0.0.1:8788` |
+| Backend tRPC | Adaptadores remotos con secretos fuera del navegador | Sí para proveedores remotos | Servidor de la aplicación |
+| Modelo local | Genera respuestas offline | No | Ollama, LM Studio o llama.cpp |
 
-El dashboard **no puede**, por sí solo, iniciar o detener procesos de tu ordenador, leer el estado real de tu terminal, guardar API keys de forma segura, conectar WhatsApp/Telegram, ejecutar Aider ni medir ahorro de tokens. Para eso hace falta un *companion* local o un backend autorizado que tú ejecutes en la misma máquina y que exponga una API con autenticación.
+El frontend no arranca procesos ni ejecuta comandos del sistema por sí mismo. Esa limitación es deliberada: evita que una página web pueda ejecutar acciones peligrosas sin una aprobación local explícita.
 
-| Capacidad | Estado | Qué hace falta |
-|---|---|---|
-| Navegación, estados y runbook | Funciona en la web | Nada adicional. |
-| Copiar comandos | Funciona en la web | Permiso del portapapeles del navegador. |
-| Ruta de proyecto | Funciona en la web | Se guarda solo en `localStorage`; no mueve archivos. |
-| Abrir Odysseus | Enlace externo | Que el proceso esté levantado y que el proxy responda. |
-| Abrir OpenClaw | Enlace externo | Gateway activo, autenticación y origen permitido. |
-| Ejecutar Aider | Requiere terminal local | Aider, un proyecto Git y un proveedor de modelo. |
-| Medir ahorro de tokens | No medido | Benchmark real con un proyecto y una herramienta instalada. |
+## Instalación desde el ZIP
 
-## Odysseus
-
-Odysseus debe ejecutarse en el equipo donde quieras trabajar. El dashboard conserva un enlace histórico de proxy, pero la auditoría actual devolvió `502`; por tanto, ese enlace no se considera operativo. Si el repositorio y el entorno virtual existen en tu equipo, inicia el servicio con el comando que corresponda a la instalación real y verifica primero con el navegador en `localhost`.
-
-No introduzcas credenciales en el dashboard. Las credenciales de una aplicación local deben cambiarse desde la propia aplicación y mantenerse fuera del repositorio, del frontend y de cualquier captura compartida.
-
-## OpenClaw
-
-OpenClaw requiere un Gateway activo con autenticación. La documentación oficial recomienda configurar el Gateway y usar políticas de pairing/allowlist para mensajes directos [1]. Cuando se accede a Control UI a través de un proxy, el origen completo del navegador debe formar parte de `gateway.controlUi.allowedOrigins`; no se deben usar comodines.
-
-La configuración conceptual debe contener una sección equivalente a esta, adaptada a la ruta y versión reales de tu instalación:
-
-```json
-{
-  "gateway": {
-    "mode": "local",
-    "controlUi": {
-      "allowedOrigins": [
-        "https://TU-ORIGEN-REAL"
-      ]
-    }
-  }
-}
-```
-
-Después de modificarla, valida la configuración con las herramientas oficiales de OpenClaw y reinicia el Gateway en la misma máquina. No expongas el Gateway a Internet sin contraseña/token, allowlists y auditoría de seguridad. El dashboard no aplica este cambio automáticamente, porque un frontend estático no tiene acceso al sistema de archivos ni al proceso de OpenClaw.
-
-## Aider
-
-Aider es una herramienta de terminal para editar código junto con un modelo. La forma segura de trabajar es iniciar cada tarea dentro de un repositorio Git, pedir primero un plan, revisar el diff y ejecutar las pruebas antes de aceptar cambios.
-
-El dashboard copia un comando de arranque, pero no ejecuta la sesión por ti. La forma general es:
+Descomprime el archivo en una carpeta de trabajo. Instala Node.js 22 o una versión LTS compatible y pnpm. Desde la raíz del proyecto ejecuta:
 
 ```bash
-cd /ruta/a/tu/proyecto
-git status
-/path/a/aider/venv/bin/aider
+pnpm install
+pnpm check
+pnpm test
+pnpm check:companion
 ```
 
-Configura el proveedor del modelo en la terminal o en la configuración local de Aider. Nunca pegues una clave en un archivo que vaya a GitHub. Aider soporta varios proveedores; consulta su documentación actual antes de elegir una variable de entorno [2].
+La última orden arranca el companion en un puerto efímero, prueba su estado, comprueba el catálogo y verifica que bloquea endpoints remotos cuando se ha seleccionado un proveedor local.
 
-## Token lab y la referencia a “Yang”
+## Modo gratuito sin API: Ollama
 
-La búsqueda no identificó un repositorio único llamado “Yang” que sea, por sí solo, el workspace de ahorro de tokens que describes. La coincidencia técnica más clara es **LLMLingua**, proyecto en el que Yuqing Yang aparece como coautora; LLMLingua comprime prompts y contexto largo mediante métodos académicos [3]. Además, hay proyectos de ingeniería directamente orientados a agentes de código:
+Instala [Ollama](https://ollama.com/), arráncalo y descarga un modelo:
 
-| Proyecto | Capa | Uso razonable | Precaución |
+```bash
+ollama serve
+ollama pull llama3.2
+pnpm companion
+```
+
+Mantén el companion ejecutándose. En el Centro de Mando abre **Model bridge**, selecciona **Ollama**, conserva `http://127.0.0.1:11434` y ejecuta una tarea. El navegador hablará con `http://127.0.0.1:8788`, y el companion hablará con Ollama. Ninguna API externa es necesaria.
+
+La calidad y velocidad dependen del hardware y del modelo descargado. Si el modelo no cabe en la memoria disponible, elige uno más pequeño; no se debe declarar que el modo offline está activo si Ollama no responde.
+
+## Modo gratuito sin API: LM Studio
+
+En [LM Studio](https://lmstudio.ai/) descarga un modelo compatible, inicia su servidor local OpenAI-compatible y utiliza normalmente `http://127.0.0.1:1234/v1`. En **Model bridge**, selecciona **LM Studio**, escribe el identificador exacto del modelo cargado y conserva el endpoint local. El companion no añade ninguna clave a la petición.
+
+## Modo gratuito sin API: llama.cpp
+
+Inicia el servidor OpenAI-compatible de llama.cpp con un modelo GGUF, normalmente en `http://127.0.0.1:8080/v1`. Selecciona **llama.cpp** en la interfaz y utiliza el identificador de modelo esperado por tu servidor. Solo se aceptan endpoints de loopback por seguridad.
+
+## Proveedores remotos
+
+Los proveedores remotos son opcionales. La interfaz nunca recibe ni guarda la clave. Para usarlos en el companion local, define las variables de entorno en un archivo `.env` local que no se incluye en el ZIP:
+
+```bash
+OPENAI_API_KEY=...
+ANTHROPIC_API_KEY=...
+GOOGLE_AI_API_KEY=...
+OPENROUTER_API_KEY=...
+APP_ORIGIN=http://localhost:3000
+COMPANION_HOST=127.0.0.1
+COMPANION_PORT=8788
+```
+
+También puedes configurar los secretos en el servidor gestionado mediante su panel de secretos. Los cuatro proveedores se mantienen separados: puedes utilizar uno solo, combinarlos o no configurar ninguno.
+
+| Proveedor | Variable | Modelo inicial | Ruta |
 |---|---|---|---|
-| [Token Optimizer](https://github.com/alexgreensh/token-optimizer) | Contexto, checkpoints y auditoría | Investigar integración con OpenClaw, OpenCode o Claude Code. | Revisar la licencia PolyForm Noncommercial antes de uso comercial. |
-| [Token-Saver](https://github.com/ppgranger/token-saver) | Output de terminal | Reducir ruido de `git`, pruebas, instalaciones y comandos CLI. | La documentación publicita compatibilidad específica; no asumir que Aider esté soportado sin probar. |
-| [LLMLingua](https://github.com/microsoft/LLMLingua) | Compresión de prompts | Experimentos de contexto largo y RAG. | Requiere Python, modelos y validación de calidad; no es un simple interruptor del dashboard. |
+| OpenAI | `OPENAI_API_KEY` | `gpt-4o-mini` | Chat Completions |
+| Anthropic | `ANTHROPIC_API_KEY` | `claude-3-5-haiku-latest` | Messages API |
+| Google AI Studio/Gemini | `GOOGLE_AI_API_KEY` | `gemini-2.0-flash` | `generateContent` |
+| OpenRouter | `OPENROUTER_API_KEY` | `openai/gpt-4o-mini` | Chat Completions compatible |
 
-Los valores del Token lab aparecen como **N/D** porque no se ha ejecutado un benchmark en tu proyecto. Las cifras que aparezcan en los README de terceros son resultados de sus autores, no mediciones de tu ordenador.
+Añadir una API aporta acceso a modelos remotos de mayor capacidad o velocidad, pero no es obligatorio para el modo local. Las claves pueden tener coste, límites y políticas de privacidad propias del proveedor.
 
-## Procedimiento recomendado
+## Seguridad
 
-Primero levanta y verifica una sola estación. Después configura un proveedor de modelo y prueba una tarea pequeña. Cuando la respuesta sea estable, incorpora un optimizador de contexto y compara tokens antes y después con el mismo prompt, el mismo repositorio y el mismo modelo. Conserva el resultado del benchmark y solo entonces actualiza el dashboard con una cifra real.
+Los endpoints personalizados solo se aceptan para `localhost`, `127.0.0.1` o `::1`. Los dominios remotos están fijados por proveedor para evitar que una petición del navegador convierta el servidor en un proxy SSRF. El companion no tiene una ruta genérica para ejecutar comandos del sistema y no acepta instrucciones de shell desde Internet. Los secretos no se guardan en `localStorage`, no se empaquetan en el ZIP y no aparecen en el catálogo de estados.
 
-No combines simultáneamente cambios de Gateway, proveedor de modelo, plugin de tokens y estructura de archivos. Separar las variables hace posible saber qué ha fallado y permite volver atrás.
+OpenClaw y Odysseus siguen siendo servicios independientes. El Centro de Mando ofrece sus enlaces y comandos, pero no arranca daemons ni administra cuentas externas de forma automática. Para OpenClaw, usa allowlists de origen, autenticación y pairing; para Odysseus, cambia las credenciales desde la propia aplicación y nunca las pongas en el frontend.
 
-## Referencias
+## Verificación y diagnóstico
 
-[1] [OpenClaw — GitHub repository and security/configuration guidance](https://github.com/openclaw/openclaw).  
-[2] [Aider — official documentation](https://aider.chat/docs/).  
-[3] [Microsoft LLMLingua — prompt compression repository](https://github.com/microsoft/LLMLingua).  
-[4] [Token Optimizer — open source repository](https://github.com/alexgreensh/token-optimizer).  
-[5] [Token-Saver — CLI output compression repository](https://github.com/ppgranger/token-saver).  
-[6] [GitHub token optimization topic](https://github.com/topics/token-optimization).
+Usa estas comprobaciones cuando algo no responda:
+
+```bash
+curl http://127.0.0.1:8788/healthz
+curl http://127.0.0.1:8788/v1/providers
+pnpm check
+pnpm test
+pnpm check:companion
+pnpm build
+```
+
+`Comprobación local pendiente` significa que el Centro de Mando está vivo, pero todavía no ha confirmado que el runtime local exista. `Clave pendiente` significa que el proveedor remoto no tiene credencial disponible en el servidor. Ninguno de esos estados representa una respuesta de IA.
+
+## Distribución
+
+Genera el ZIP limpio con:
+
+```bash
+pnpm package:zip
+```
+
+El archivo aparece en `../ai-command-center-delivery/`. El empaquetador excluye dependencias, builds, logs, `.git` y cualquier archivo `.env`. Incluye el código fuente, las pruebas, la configuración de ejemplo, el companion y este manual.
+
+## Límites conocidos
+
+El modelo local debe instalarse aparte porque depende del sistema operativo y del hardware. Las API remotas pueden tener límites, coste o cambios de disponibilidad propios del proveedor. El paquete no promete que una clave sea válida ni que un modelo concreto esté descargado; comprueba cada estado en tiempo de ejecución.

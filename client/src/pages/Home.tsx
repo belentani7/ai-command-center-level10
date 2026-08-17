@@ -39,8 +39,9 @@ import {
   Zap,
 } from "lucide-react";
 import { toast } from "sonner";
+import ModelBridge from "@/components/ModelBridge";
 
-type ViewKey = "overview" | "workspaces" | "tokens" | "memory" | "runbook";
+type ViewKey = "overview" | "workspaces" | "models" | "tokens" | "memory" | "runbook";
 
 type Service = {
   id: string;
@@ -100,6 +101,7 @@ const services: Service[] = [
 const navItems: { key: ViewKey; label: string; detail: string; icon: typeof LayoutDashboard }[] = [
   { key: "overview", label: "Centro de mando", detail: "Lectura general", icon: LayoutDashboard },
   { key: "workspaces", label: "Workspaces", detail: "3 estaciones", icon: ServerCog },
+  { key: "models", label: "Model bridge", detail: "API / local", icon: Cpu },
   { key: "tokens", label: "Token lab", detail: "Optimización", icon: Gauge },
   { key: "memory", label: "Memoria y archivos", detail: "Estructura local", icon: Library },
   { key: "runbook", label: "Runbook", detail: "Pasos seguros", icon: Clipboard },
@@ -313,6 +315,8 @@ function Home() {
             <div className="setup-note"><Settings2 size={17} /><div><strong>Regla de oro</strong><p>Conecta un proveedor de modelo por estación. Esta interfaz recuerda rutas y comandos, pero nunca almacena tus API keys.</p></div><ShieldCheck size={17} className="muted-icon" /></div>
           </section>
         )}
+
+        {activeView === "models" && <ModelBridge />}
 
         {activeView === "tokens" && (
           <section className="page-section">

@@ -9,3 +9,11 @@ La auditoría de red devolvió `502` para los endpoints proxy históricos de Ody
 No se guardan API keys ni secretos en el frontend. La ruta de proyecto se guarda únicamente en localStorage. Las métricas de ahorro del Token lab se sustituyeron por `N/D` hasta que exista un benchmark real en el equipo.
 
 El build `pnpm check && pnpm build` pasó correctamente. Solo permanece la advertencia esperable de assets `/manus-storage` resueltos en runtime y el aviso de tamaño del bundle.
+
+## Verificación Model bridge — 17 agosto 2026
+
+El preview carga correctamente y la navegación muestra el módulo **Model bridge**. El módulo presenta los ocho proveedores previstos: demo, Ollama, LM Studio, llama.cpp, OpenAI, Anthropic/Claude, Google AI Studio/Gemini y OpenRouter.
+
+La primera vista local muestra `Comprobación local pendiente` y `Sin ejecución`, sin declarar que existe un modelo instalado. El endpoint del companion aparece editable y no se muestran campos de API key. La pantalla comunica que las claves viven solo en backend y que el modo sin API necesita un modelo local real.
+
+Las pruebas ejecutables pasaron: `pnpm check`, `pnpm test`, `pnpm check:companion` y `pnpm build`. El build mantiene únicamente la advertencia de un asset Manus externo que se resuelve en runtime y una advertencia de tamaño de chunk de Vite; no hay errores de TypeScript ni de pruebas.
