@@ -3,12 +3,11 @@
  * Layout asimétrico, glassmorfismo editorial y acciones honestas: distinguir conectado,
  * configurado y bloqueado. La UI no finge controlar procesos del sistema sin backend.
  */
-import { useMemo, useState } from "react";
+import { lazy, Suspense, useMemo, useState } from "react";
 import {
   Activity,
   ArrowUpRight,
   Bot,
-  Check,
   ChevronRight,
   CircleHelp,
   Clipboard,
@@ -16,30 +15,25 @@ import {
   Command,
   Copy,
   Cpu,
-  FileCode2,
-  FolderOpen,
   Gauge,
-  Globe2,
-  KeyRound,
   LayoutDashboard,
   Library,
   Menu,
-  MessageSquareText,
   Network,
-  PanelLeft,
   Play,
   RefreshCw,
   Search,
   ServerCog,
   Settings2,
   ShieldCheck,
-  Sparkles,
   TerminalSquare,
   X,
-  Zap,
 } from "lucide-react";
 import { toast } from "sonner";
-import ModelBridge from "@/components/ModelBridge";
+const ModelBridge = lazy(() => import("@/components/ModelBridge"));
+const TokenLabView = lazy(() => import("@/components/DeferredViews").then(({ TokenLabView: View }) => ({ default: View })));
+const MemoryView = lazy(() => import("@/components/DeferredViews").then(({ MemoryView: View }) => ({ default: View })));
+const RunbookView = lazy(() => import("@/components/DeferredViews").then(({ RunbookView: View }) => ({ default: View })));
 
 type ViewKey = "overview" | "workspaces" | "models" | "tokens" | "memory" | "runbook";
 
@@ -107,11 +101,6 @@ const navItems: { key: ViewKey; label: string; detail: string; icon: typeof Layo
   { key: "runbook", label: "Runbook", detail: "Pasos seguros", icon: Clipboard },
 ];
 
-const tokenRows = [
-  { label: "Ahorro en este equipo", value: "N/D", note: "requiere benchmark local", tone: "ice" },
-  { label: "Output comprimido", value: "N/D", note: "requiere instalar un filtro", tone: "mint" },
-  { label: "Contexto repetido", value: "N/D", note: "requiere historial real", tone: "coral" },
-];
 
 function StatusPill({ status }: { status: Service["status"] }) {
   const tone = status === "No responde" ? "coral" : status === "No verificable" ? "ice" : "ice";
@@ -316,25 +305,17 @@ function Home() {
           </section>
         )}
 
-        {activeView === "models" && <ModelBridge />}
-
-        {activeView === "tokens" && (
-          <section className="page-section">
-            <div className="section-heading"><div><p className="eyebrow">Módulo 03 / Eficiencia</p><h2>Token lab</h2><p className="lead">Ahorra contexto antes de pedir más potencia.</p></div><span className="lab-badge"><Zap size={14} /> Método abierto</span></div>
-            <div className="token-hero-grid"><article className="token-copy-card"><div className="token-mark"><Sparkles size={16} /></div><h3>Yang / compresión de contexto</h3><p>La idea que estás buscando encaja con una familia de herramientas de GitHub que indexan el repositorio, condensan lecturas y dejan que el agente busque en lugar de volcar archivos completos.</p><div className="token-actions"><a className="button button-primary" href="https://github.com/topics/token-optimization" target="_blank" rel="noreferrer">Explorar repositorios <ArrowUpRight size={14} /></a><button className="button button-quiet" onClick={() => showView("runbook")}>Aplicar método <ChevronRight size={14} /></button></div></article><div className="token-image-card"><img src="/manus-storage/token-lab-visual_eb0de451.jpg" alt="Prisma que organiza un flujo de partículas en un laboratorio de tokens" /></div></div>
-            <div className="token-metrics">{tokenRows.map((row) => <div className={`token-metric metric-${row.tone}`} key={row.label}><span className="metric-label">{row.label}</span><strong>{row.value}</strong><small>{row.note}</small></div>)}</div>
-            <div className="source-shelf"><div className="card-heading"><div><p className="eyebrow">Fuentes verificadas</p><h3>Elige la capa correcta</h3></div><Search size={18} /></div><div className="source-grid"><a className="source-card" href="https://github.com/alexgreensh/token-optimizer" target="_blank" rel="noreferrer"><span className="source-index">01</span><strong>Token Optimizer</strong><span>Contexto, checkpoints y auditoría multi-runtime.</span><ArrowUpRight size={14} /></a><a className="source-card" href="https://github.com/ppgranger/token-saver" target="_blank" rel="noreferrer"><span className="source-index">02</span><strong>Token-Saver</strong><span>Output de terminal determinista y local.</span><ArrowUpRight size={14} /></a><a className="source-card" href="https://github.com/microsoft/LLMLingua" target="_blank" rel="noreferrer"><span className="source-index">03</span><strong>LLMLingua</strong><span>Compresión académica de prompts y contexto largo.</span><ArrowUpRight size={14} /></a></div><p className="source-disclaimer"><ShieldCheck size={13} /> Compatibilidad y licencia deben comprobarse antes de instalar; este dashboard no finge que estén activos.</p></div>
-            <div className="token-checklist"><div className="card-heading"><div><p className="eyebrow">Protocolo de ahorro</p><h3>Antes de cada tarea larga</h3></div><Gauge size={20} /></div><div className="check-row"><span><Check size={14} /> Define el objetivo en 3 líneas</span><span><Check size={14} /> Lee símbolos, no carpetas enteras</span><span><Check size={14} /> Divide plan, ejecución y verificación</span></div></div>
-          </section>
+        {activeView === "models" && (
+          <Suspense fallback={<section className="page-section" aria-live="polite"><div className="section-heading"><div><p className="eyebrow">Módulo 02 / Modelos</p><h2>Cargando Model bridge…</h2></div></div></section>}>
+            <ModelBridge />
+          </Suspense>
         )}
 
-        {activeView === "memory" && (
-          <section className="page-section"><div className="section-heading"><div><p className="eyebrow">Módulo 04 / Orden</p><h2>Memoria y archivos</h2><p className="lead">Un lugar para cada cosa, con decisiones reversibles.</p></div><FolderOpen size={22} /></div><div className="memory-layout"><article className="memory-tree"><div className="tree-head"><span>~/workspace</span><span className="tree-state">LOCAL</span></div><div className="tree-row tree-root"><FolderOpen size={15} /> workspaces <span>3</span></div><div className="tree-row"><Bot size={15} /> odysseus <small>chat / agents</small></div><div className="tree-row"><Code2 size={15} /> aider <small>pair coding</small></div><div className="tree-row"><Network size={15} /> openclaw <small>gateway / skills</small></div><div className="tree-row tree-root"><FolderOpen size={15} /> docs <span>4</span></div><div className="tree-row"><FileCode2 size={15} /> MASTER_AI_ACCESS.md <small>guía local</small></div><div className="tree-row"><FileCode2 size={15} /> runbook.md <small>pasos seguros</small></div></article><article className="memory-action"><p className="eyebrow">Ruta activa</p><h3>¿En qué proyecto vas a trabajar?</h3><p>La ruta se guarda solo en este navegador para rellenar tus comandos de Aider. No mueve archivos automáticamente.</p><label htmlFor="project-path">Carpeta de proyecto</label><div className="path-input"><FolderOpen size={15} /><input id="project-path" value={projectPath} onChange={(event) => setProjectPath(event.target.value)} /><button onClick={saveProjectPath}>Guardar</button></div><div className="safe-note"><ShieldCheck size={15} /><span>Seguro por defecto · sin operaciones destructivas</span></div></article></div></section>
-        )}
+        {activeView === "tokens" && <Suspense fallback={<section className="page-section" aria-live="polite"><h2>Cargando Token lab…</h2></section>}><TokenLabView showView={showView} /></Suspense>}
 
-        {activeView === "runbook" && (
-          <section className="page-section"><div className="section-heading"><div><p className="eyebrow">Módulo 05 / Operación</p><h2>Runbook de nivel 10</h2><p className="lead">Tres movimientos para pasar de instalación a trabajo real.</p></div><span className="section-note">Modo supervisado</span></div><div className="runbook-grid"><article className="run-step"><span className="step-number">01</span><div><p className="eyebrow">Preparar</p><h3>Comprueba el modelo</h3><p>Elige un proveedor en Odysseus o Aider. Si vas local, configura Ollama y verifica que el modelo responde antes de abrir un proyecto grande.</p><button className="text-link" onClick={() => onCopy("ollama list && ollama run llama3.2", "Comando local copiado")}>Copiar prueba local <Copy size={14} /></button></div></article><article className="run-step"><span className="step-number">02</span><div><p className="eyebrow">Conectar</p><h3>Repara OpenClaw sin exponerlo</h3><p>Usa allowlists de origen, autenticación y pairing. No abras DMs públicos ni pegues claves en el panel web.</p><button className="text-link" onClick={() => onCopy("openclaw security audit --deep", "Auditoría copiada")}>Copiar auditoría <Copy size={14} /></button></div></article><article className="run-step"><span className="step-number">03</span><div><p className="eyebrow">Construir</p><h3>Deja que Aider edite con git</h3><p>Inicia cada tarea en una rama, pide plan antes de cambios y revisa el diff. El agente acelera el trabajo; tú mantienes el criterio.</p><button className="text-link" onClick={() => onCopy(`cd ${projectPath} && git status && ~/workspaces/aider/venv/bin/aider`, "Arranque de Aider copiado")}>Copiar arranque <Copy size={14} /></button></div></article></div><div className="runbook-footer"><div className="footer-icon"><ShieldCheck size={18} /></div><div><strong>Principio de confianza</strong><p>Este centro unifica tu mapa de trabajo. Las acciones sobre procesos del sistema y cuentas externas siguen necesitando tu confirmación explícita.</p></div><button className="button button-primary" onClick={() => toast.success("Checklist preparado para tu siguiente sesión")}>Marcar listo <Check size={14} /></button></div></section>
-        )}
+        {activeView === "memory" && <Suspense fallback={<section className="page-section" aria-live="polite"><h2>Cargando Memoria y archivos…</h2></section>}><MemoryView projectPath={projectPath} setProjectPath={setProjectPath} saveProjectPath={saveProjectPath} /></Suspense>}
+
+        {activeView === "runbook" && <Suspense fallback={<section className="page-section" aria-live="polite"><h2>Cargando Runbook…</h2></section>}><RunbookView projectPath={projectPath} onCopy={onCopy} /></Suspense>}
 
         <footer className="page-footer"><span>AI Command Center / v1.0</span><span>Local-first · Open source friendly · Human in the loop</span></footer>
       </main>

@@ -31,6 +31,7 @@ export default function ModelBridge() {
   const [model, setModel] = useState("llama3.2");
   const [baseUrl, setBaseUrl] = useState("http://127.0.0.1:11434");
   const [companionUrl, setCompanionUrl] = useState(() => localStorage.getItem(companionStorageKey) ?? "http://127.0.0.1:8788");
+  const [companionToken, setCompanionToken] = useState("");
   const [prompt, setPrompt] = useState("");
   const [messages, setMessages] = useState<BridgeMessage[]>([initialMessage]);
   const [busy, setBusy] = useState(false);
@@ -56,9 +57,11 @@ export default function ModelBridge() {
   };
 
   const callLocalCompanion = async (conversation: ChatMessage[]) => {
+    const headers: Record<string, string> = { "content-type": "application/json" };
+    if (companionToken.trim()) headers.authorization = `Bearer ${companionToken.trim()}`;
     const response = await fetch(`${companionUrl.replace(/\/$/, "")}/v1/chat/completions`, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers,
       body: JSON.stringify({ provider: selectedProvider, model, baseUrl, messages: conversation }),
     });
     const payload = (await response.json().catch(() => ({}))) as CompanionReply & { error?: string };
@@ -135,7 +138,12 @@ export default function ModelBridge() {
           <div className="bridge-config">
             <label>Modelo<input value={model} onChange={(event) => setModel(event.target.value)} placeholder={selectedDescriptor.defaultModel} /></label>
             <label>Endpoint local<input value={baseUrl} disabled={selectedDescriptor.kind !== "local"} onChange={(event) => setBaseUrl(event.target.value)} placeholder="http://127.0.0.1:11434" /></label>
-            {selectedDescriptor.kind === "local" && <label>Companion<input value={companionUrl} onChange={(event) => saveCompanionUrl(event.target.value)} placeholder="http://127.0.0.1:8788" /></label>}
+            {selectedDescriptor.kind === "local" && (
+              <>
+                <label>Companion<input value={companionUrl} onChange={(event) => saveCompanionUrl(event.target.value)} placeholder="http://127.0.0.1:8788" /></label>
+                <label>Token del companion<input type="password" value={companionToken} onChange={(event) => setCompanionToken(event.target.value)} placeholder="Solo memoria de esta sesión" autoComplete="off" /></label>
+              </>
+            )}
           </div>
 
           <div className="bridge-status-row">
@@ -154,7 +162,7 @@ export default function ModelBridge() {
             <textarea value={prompt} onChange={(event) => setPrompt(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) void runPrompt(); }} placeholder="Escribe una tarea. Ctrl/Cmd + Enter para ejecutar." aria-label="Tarea para el modelo" />
             <button className="button button-primary" onClick={() => void runPrompt()} disabled={busy || !prompt.trim()}>{busy ? <Loader2 size={15} className="spin" /> : <Send size={15} />} Ejecutar</button>
           </div>
-          <p className="bridge-footnote"><CircleAlert size={13} /> Sin API y sin modelo local, el sistema no genera respuestas: muestra el motivo y el siguiente paso.</p>
+          <p className="bridge-footnote"><CircleAlert size={13} /> Sin API y sin modelo local, el sistema no genera respuestas: muestra el motivo y el siguiente paso. El token del companion nunca se guarda en localStorage.</p>
         </div>
       </div>
     </section>

@@ -1,33 +1,36 @@
-# Entrega ZIP multi-proveedor y offline
+# Auditoría estricta 10/10 y GitHub
 
-- [x] Definir proveedores soportados y separar API remota, endpoint compatible y modelo local.
-- [x] Crear archivo de configuración de ejemplo sin secretos.
-- [x] Añadir selector de proveedor, modelo, endpoint y modo offline en la interfaz.
-- [x] Añadir una capa de cliente segura que nunca exponga claves en el frontend publicado.
-- [x] Crear companion local para Ollama/llama.cpp y proveedores remotos mediante variables de entorno.
-- [x] Añadir comprobación de conexión y mensajes de error accionables.
-- [x] Añadir modo demo/offline sin llamadas de red y sin inventar respuestas de modelo.
-- [x] Documentar OpenAI, Anthropic, Google AI Studio/Gemini, OpenRouter/compatible y Ollama.
-- [x] Incluir scripts de arranque, configuración y empaquetado.
-- [x] Ejecutar pruebas TypeScript, build y pruebas funcionales del companion.
-- [x] Crear ZIP completo con código, manuales, scripts y ejemplo de configuración.
-- [x] Crear checkpoint y entregar el ZIP.
+- [x] Definir matriz de auditoría basada en evidencias.
+- [x] Ejecutar comprobación TypeScript, Vitest y companion en la sandbox.
+- [x] Evaluar dimensiones: Backend, Frontend, Utilidad, Relevancia, Potencial e Identidad (más seguridad, rendimiento, mantenibilidad y entrega).
+- [x] Generar informe técnico detallado.
+- [x] Preparar exportación a un repositorio nuevo de GitHub y solicitar confirmación.
+- [x] Guardar checkpoint y entregar resultados.
 
-## Alcance confirmado por el usuario
+## Brechas descubiertas en la auditoría estricta
 
-- [x] Resolver la migración a fullstack sin perder la interfaz Observatorio de Cristal.
-- [x] Crear configuración segura para OpenAI, Anthropic, Google AI Studio/Gemini y OpenRouter.
-- [x] Crear un modo local sin API con Ollama, LM Studio y endpoint OpenAI-compatible.
-- [x] Añadir una interfaz de chat real con proveedor y modelo seleccionables.
-- [x] Añadir un companion local con autorización explícita y sin ejecución arbitraria de comandos desde Internet.
-- [x] Probar respuestas reales cuando exista proveedor y mostrar un estado honesto cuando no exista.
-- [x] Empaquetar código, scripts, manual, configuración de ejemplo y pruebas en un ZIP completo.
+- [x] Conectar el token Bearer del companion en la interfaz sin persistirlo.
+- [x] Aplicar carga diferida del Model bridge para reducir el bundle inicial.
+- [x] Repetir build y comprobar que la advertencia de chunk mejora o queda cuantificada.
+- [x] Repetir pruebas de seguridad, UI y empaquetado tras las correcciones.
 
-## Criterio de aceptación 10/10
+## Hallazgo crítico de auditoría
 
-- [x] No entregar el ZIP hasta que `pnpm check`, `pnpm build` y `pnpm test` pasen.
-- [x] No declarar disponible ningún proveedor sin una ruta real de configuración y un estado verificable.
-- [x] No almacenar claves en el frontend, en localStorage ni dentro del ZIP.
-- [x] No ejecutar comandos del sistema recibidos desde Internet sin una acción local explícita del usuario.
-- [x] Probar el modo sin API con respuesta de error honesta cuando no haya modelo local.
-- [x] Documentar con precisión qué funciona, qué requiere instalación y qué requiere credenciales.
+- [x] Resolver o documentar las 72 vulnerabilidades reportadas por `pnpm audit` (17 de severidad alta) antes de aprobar la exportación a GitHub.
+- [x] Separar vulnerabilidades de producción de las transitorias de desarrollo y registrar el resultado reproducible.
+
+## Regresión tras actualización de seguridad
+
+- [x] Adaptar `client/src/components/ui/chart.tsx` a Recharts 3 o fijar una versión compatible con el template.
+- [x] Repetir check, tests y build después de resolver la regresión.
+
+## Riesgo residual de producción
+
+- [x] Migrar Express 4 a Express 5 y actualizar sus tipos para eliminar path-to-regexp, qs y body-parser vulnerables.
+- [x] Volver a ejecutar `pnpm audit --prod` y exigir cero avisos high/critical antes de aprobar la entrega.
+
+## Validación y Entrega Final Pendiente
+- [x] Ejecutar `pnpm package:zip` para generar el artefacto ZIP reproducible final con la versión auditada.
+- [x] Documentar explícitamente la separación de vulnerabilidades de producción frente a desarrollo en el informe de auditoría.
+- [x] Guardar checkpoint definitivo con `webdev_save_checkpoint`.
+- [x] Informar al usuario y preparar el repositorio GitHub de `belentani7`.
