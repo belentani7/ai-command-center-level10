@@ -18,3 +18,9 @@ Este informe evalúa el proyecto integrando los estándares exigidos en la guía
 ## Estado para GitHub
 
 El repositorio está preparado para ser exportado a la cuenta de GitHub de **belentani7**.
+
+
+## Separación de Vulnerabilidades (Producción vs Desarrollo)
+
+- **Producción (`pnpm audit --prod`):** **0 vulnerabilidades** (0 high, 0 critical). Tras la migración a Express 5 y la actualización de dependencias críticas (`axios`, `drizzle-orm`, `nanoid`, `recharts`), el entorno de ejecución en vivo está totalmente libre de vulnerabilidades reportadas.
+- **Desarrollo y transitorias:** Las dependencias exclusivas de herramientas de construcción y pruebas (como Vitest y Vite plugins) no afectan al runtime desplegado ni al artefacto final exportado, manteniéndose aisladas del tráfico de usuarios.
