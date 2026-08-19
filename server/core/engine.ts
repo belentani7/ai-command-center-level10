@@ -39,7 +39,7 @@ export class ManusCoreEngine {
         console.log(`[ManusCoreEngine] Fetching ${targetUrl}...`);
         const resp = await fetch(targetUrl, {
           headers: { "User-Agent": "ManusCoreEngine/1.0 (Autonomous Web Explorer)" },
-          signal: AbortSignal.timeout(10000),
+          signal: AbortSignal.timeout(15000),
         });
 
         if (!resp.ok) {

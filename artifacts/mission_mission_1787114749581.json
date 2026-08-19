@@ -1,8 +1,8 @@
 {
-  "missionId": "test_mission_unit",
+  "missionId": "mission_1787114749581",
   "status": "completed",
   "itemsExtracted": 1,
-  "durationMs": 1207,
+  "durationMs": 11004,
   "results": [
     {
       "url": "https://example.com",
@@ -12,6 +12,11 @@
         "Standard HTML / Web Stack"
       ],
       "contentSnippet": "Example Domain Example Domain This domain is for use in documentation examples without needing permission. Avoid use in operations. Learn more"
+    },
+    {
+      "url": "https://httpbin.org/html",
+      "success": false,
+      "error": "The operation was aborted due to timeout"
     }
   ]
 }
