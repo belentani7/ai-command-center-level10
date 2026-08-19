@@ -5,6 +5,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { getProviderStatuses, runChat } from "./ai/providers";
 import { providerIds } from "../shared/ai";
+import { missionsRouter } from "./routers/missions";
 
 const chatMessageSchema = z.object({
   role: z.enum(["system", "user", "assistant"]),
@@ -32,6 +33,7 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => runChat(input)),
   }),
+  missions: missionsRouter,
 });
 
 export type AppRouter = typeof appRouter;

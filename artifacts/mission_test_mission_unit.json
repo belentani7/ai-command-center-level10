@@ -1,0 +1,17 @@
+{
+  "missionId": "test_mission_unit",
+  "status": "completed",
+  "itemsExtracted": 1,
+  "durationMs": 1363,
+  "results": [
+    {
+      "url": "https://example.com",
+      "success": true,
+      "title": "Example Domain",
+      "techDetected": [
+        "Standard HTML / Web Stack"
+      ],
+      "contentSnippet": "Example Domain Example Domain This domain is for use in documentation examples without needing permission. Avoid use in operations. Learn more"
+    }
+  ]
+}
