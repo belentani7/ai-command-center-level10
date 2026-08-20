@@ -2,7 +2,7 @@
   "missionId": "test_mission_unit",
   "status": "completed",
   "itemsExtracted": 1,
-  "durationMs": 1207,
+  "durationMs": 1310,
   "results": [
     {
       "url": "https://example.com",

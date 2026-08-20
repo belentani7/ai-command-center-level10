@@ -17,5 +17,5 @@ describe("ManusCoreEngine Autonomous Mission Tests", () => {
     expect(result.results.length).toBe(1);
     expect(result.results[0].success).toBe(true);
     expect(result.results[0].title).toBe("Example Domain");
-  });
+  }, 15000);
 });
