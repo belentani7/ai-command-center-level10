@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 import { globalEngine } from "./engine.js";
+import { readMissionFile } from "./mission-file.js";
+import { inspectWorkspaceStack } from "./stack.js";
 
-const args = process.argv.slice(2);
+const rawArgs = process.argv.slice(2);
+const args = rawArgs[0] === "--" ? rawArgs.slice(1) : rawArgs;
 const command = args[0];
 
 async function main() {
@@ -10,8 +13,11 @@ async function main() {
     console.log("MANUS CORE ENGINE — CLI UTILITY");
     console.log("==================================================");
     console.log("Usage:");
-    console.log("  npx tsx server/core/bin.ts mission run <url1> [url2] ...");
-    console.log("  npx tsx server/core/bin.ts mission status <id>");
+    console.log("  pnpm manus -- mission run <url1> [url2] ...");
+    console.log("  pnpm manus -- mission run-file <mission.yaml>");
+    console.log("  pnpm manus -- mission status <id>");
+    console.log("  pnpm manus -- mission results <id> [json|csv]");
+    console.log("  pnpm manus -- stack inspect");
     console.log("==================================================");
     return;
   }
@@ -25,31 +31,47 @@ async function main() {
         process.exit(1);
       }
 
-      const missionId = `mission_${Date.now()}`;
-      console.log(`[CLI] Launching autonomous mission ${missionId} on ${urls.length} target(s)...`);
+      console.log(`[CLI] Launching autonomous mission on ${urls.length} target(s)...`);
       const result = await globalEngine.executeMission({
-        id: missionId,
         name: "CLI Autonomous Extraction Mission",
         urls,
         objective: "Extract real content, titles and detect tech stack.",
       });
 
       console.log(JSON.stringify(result, null, 2));
+    } else if (subAction === "run-file") {
+      const filePath = args[2];
+      if (!filePath) {
+        console.error("Error: Please provide a YAML or JSON mission file.");
+        process.exit(1);
+      }
+      const mission = await readMissionFile(filePath);
+      console.log(JSON.stringify(await globalEngine.executeMission(mission), null, 2));
     } else if (subAction === "status") {
       const id = args[2];
       if (!id) {
         console.error("Error: Please provide a mission ID.");
         process.exit(1);
       }
-      const res = globalEngine.getMissionResult(id);
+      const res = await globalEngine.getMissionResult(id);
       if (!res) {
-        console.error(`Error: Mission ${id} not found in memory.`);
+        console.error(`Error: Mission ${id} not found.`);
         process.exit(1);
       }
       console.log(JSON.stringify(res, null, 2));
+    } else if (subAction === "results") {
+      const id = args[2];
+      const format = args[3] === "csv" ? "csv" : "json";
+      if (!id) {
+        console.error("Error: Please provide a mission ID.");
+        process.exit(1);
+      }
+      console.log(await globalEngine.exportMission(id, format));
     } else {
       console.error(`Unknown mission sub-action: ${subAction}`);
     }
+  } else if (command === "stack" && args[1] === "inspect") {
+    console.log(JSON.stringify(await inspectWorkspaceStack(), null, 2));
   } else {
     console.error(`Unknown command: ${command}`);
   }

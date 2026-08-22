@@ -34,3 +34,11 @@
 - [x] Documentar explícitamente la separación de vulnerabilidades de producción frente a desarrollo en el informe de auditoría.
 - [x] Guardar checkpoint definitivo con `webdev_save_checkpoint`.
 - [x] Informar al usuario y preparar el repositorio GitHub de `belentani7`.
+
+## Ampliación del motor autónomo
+- [x] Validar y restaurar el estado del engine tras la recuperación del entorno.
+- [x] Incorporar concurrencia controlada, reintentos, deduplicación y aislamiento de errores por URL.
+- [x] Persistir misiones, resultados, logs, costes y memoria de estrategias en artefactos estructurados.
+- [x] Añadir exportación real de resultados a JSON y CSV desde la CLI.
+- [x] Corregir el arranque de Express 5 y verificar la publicación reproducible.
+- [ ] Guardar la versión verificada en GitHub y crear una copia de seguridad en Google Drive cuando la conexión esté disponible.
